@@ -1,10 +1,23 @@
 import sys
 from os import system
 import bpy
-
-sys.path.append('C:/Users/Leonid_Krazer/Desktop/ProjectBottleSim/Scripts/modules/')
+from processing import SimExecutioner
 import processOperator
+import processing
 
+bl_info = {
+    "name": "BottleSim addon",
+    "description": "Trash dataset generator",
+    "author": "Leonid Krazer",
+    "version": (0, 1),
+    "blender": (3, 2, 2),
+    "location": "View3D > Add > Mesh",
+    "warning": "", 
+    "doc_url": "",
+    "tracker_url": "",
+    "support": "COMMUNITY",
+    "category": "Development",
+}
 
 class BottleSimPanel(bpy.types.Panel):
     bl_label = "Bottle Sim"

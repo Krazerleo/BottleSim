@@ -1,8 +1,7 @@
 import sys
 import bpy
 
-sys.path.append('C:/Users/Leonid_Krazer/Desktop/ProjectBottleSim/Scripts/modules/')
-from processing import duplicate
+from processing import SimExecutioner
 
 class BottleSimOperator(bpy.types.Operator):
     """Make Sample"""
@@ -16,7 +15,7 @@ class BottleSimOperator(bpy.types.Operator):
 
     def invoke(self, context, event):
         print("chin chin")
-        se = processing.SimExecutioner()
+        se = SimExecutioner()
         se.Process()
         return {'RUNNING_MODAL'}
 
@@ -27,9 +26,6 @@ def register():
 
 def unregister():
     bpy.utils.unregister_class(BottleSimOperator)
-    
 
-#if __name__ == '__main__':
-#    register()
 
 bpy.utils.register_class(BottleSimOperator)
