@@ -1,5 +1,10 @@
+import sys
+from os import system
 import bpy
-import processing
+
+sys.path.append('C:/Users/Leonid_Krazer/Desktop/ProjectBottleSim/Scripts/modules/')
+import processOperator
+
 
 class BottleSimPanel(bpy.types.Panel):
     bl_label = "Bottle Sim"
@@ -12,19 +17,12 @@ class BottleSimPanel(bpy.types.Panel):
         layout = self.layout
 
         scene = context.scene
-
-        layout.label(text=" Simple Row:")
-
         
+        row = layout.row()
+        row.label(text="MakeSample:")
+        print("before hui")
+        row.operator("utils.execute_simulation")
+        print("after hui")
 
 
-def register():
-    bpy.utils.register_class(BottleSimPanel)
-
-
-def unregister():
-    bpy.utils.unregister_class(BottleSimPanel)
-
-
-if __name__ == "__main__":
-    register()
+bpy.utils.register_class(BottleSimPanel)
