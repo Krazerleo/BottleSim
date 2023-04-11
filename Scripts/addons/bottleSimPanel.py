@@ -3,14 +3,13 @@ from os import system
 import bpy
 from processing import SimExecutioner
 import processOperator
-import processing
 
 bl_info = {
     "name": "BottleSim addon",
     "description": "Trash dataset generator",
     "author": "Leonid Krazer",
     "version": (0, 1),
-    "blender": (3, 2, 2),
+    "blender": (3, 3, 5),
     "location": "View3D > Add > Mesh",
     "warning": "", 
     "doc_url": "",
@@ -37,5 +36,8 @@ class BottleSimPanel(bpy.types.Panel):
         row.operator("utils.execute_simulation")
         print("after hui")
 
-
-bpy.utils.register_class(BottleSimPanel)
+def register():
+    bpy.utils.register_class(BottleSimPanel)
+    
+if __name__ == "__main__":
+    register()
