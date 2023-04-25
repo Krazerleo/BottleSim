@@ -14,7 +14,6 @@ class BottleSimOperator(bpy.types.Operator):
         return {'FINISHED'}
 
     def invoke(self, context, event):
-        print("chin chin")
         se = SimExecutioner()
         se.Process()
         return {'RUNNING_MODAL'}
