@@ -4,16 +4,6 @@ import random
 import math
 import bpy
 
-def duplicate(obj, data=True, actions=True, collection=None):
-    
-    obj_copy = obj.copy()
-    if data:
-        obj_copy.data = obj_copy.data.copy()
-    if actions and obj_copy.animation_data:
-        obj_copy.animation_data.action = obj_copy.animation_data.action.copy()
-    collection.objects.link(obj_copy)
-    return obj_copy
-
 def apply_modifier(obj, mod):
     
     ctx = bpy.context.copy()
@@ -22,15 +12,12 @@ def apply_modifier(obj, mod):
     bpy.ops.object.modifier_apply(ctx, modifier=mod.name)
 
 
-class SimExecutioner():
-    
+class SimExecutioner():    
     obj_types_available = [ "Bottle", "Others types to implement" ]
     deformable_objects  = { "Bottle" : True }
     
     def __init__(self, deform_frames : int = 30, 
-                    fall_frames : int = 80,
-                    obj_type : str = "Bottle",
-                    fill_with_water: bool = False):
+                    fall_frames : int = 80,):
         
         self.deform_frames = deform_frames
         self.fall_frames = fall_frames
@@ -40,28 +27,17 @@ class SimExecutioner():
         world.frame_start = 0
         world.frame_end = self.total_frames
         
-        scene  = bpy.data.objects
-        if obj_type  not in self.obj_types_available:
-            raise Exception("This type is not currently implemented")
-            
-        original_obj = scene[obj_type]
-
-        self.my_obj = duplicate(original_obj, actions = False, 
-                            collection = bpy.context.scene.collection)
-
-        bpy.context.view_layer.objects.active = self.my_obj
-        bpy.context.active_object.name = 'bottle_copy'
-        
+        scene  = bpy.data.objects     
+        self.my_obj = scene['trash_obj']
     
-    def deform_object(self):
-        
+    def deform_object(self):        
         my_obj = self.my_obj
-        
+        my_obj.select_set(True)
         softbody_mod = [mod for mod in my_obj.modifiers if mod.type == 'SOFT_BODY']
-        
-        if softbody_mod is None:
+        if len(softbody_mod) == 0:
             softbody_mod = my_obj.modifiers.new(name = "Softbody", type = "SOFT_BODY")
-            conf = softbody_mod[0].settings
+            print(softbody_mod, '========================')
+            conf = softbody_mod.settings
             conf.bend = 1.500
             conf.damping = 0.5
             conf.friction = 0.5
@@ -71,13 +47,14 @@ class SimExecutioner():
             conf.push = 0.5
             conf.shear = 0.6
             conf.use_edges = True
-            conf.goal = False
+            conf.use_goal = False
         else:
             softbody_mod = softbody_mod[0] 
-            
-        spawn_loc = (30.115+random.uniform(0,3),
+
+        spawn_loc = (30+random.uniform(0,3),
                      0+random.uniform(-2,2),
                      2+random.uniform(0,2))
+                     
         spawn_rot = (random.uniform(-math.pi,math.pi),
                     random.uniform(-math.pi,math.pi),
                     random.uniform(-math.pi,math.pi))
@@ -93,11 +70,11 @@ class SimExecutioner():
         apply_modifier(my_obj, softbody_mod)
         
         
-    def drop_object(self):
-        
+    def drop_object(self):        
         my_obj = self.my_obj
-        
         my_obj.select_set(True)
+        bpy.context.view_layer.objects.active = my_obj
+        
         bpy.ops.object.origin_set(type = 'ORIGIN_GEOMETRY', 
                                   center = 'MEDIAN')
                                   
@@ -120,12 +97,15 @@ class SimExecutioner():
             world.frame_set(frame)       
     
     
-    def fill_water(self):
+    def fill_water_obj(self):
         pass
 
 
-    def Process(self):
-        system('cls')
-        self.deform_object()
+    def Process(self, sim_selected):
+        if sim_selected[0]:
+            self.deform_object()
+            
         self.drop_object()
-        self.fill_water()
+        
+        if sim_selected[1]:
+            self.fill_water_obj()

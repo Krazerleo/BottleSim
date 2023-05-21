@@ -1,7 +1,9 @@
 from datetime import datetime
 import sys
 import os
+import random
 import pathlib
+import json
 import bpy
 from . processing import SimExecutioner
 
@@ -12,16 +14,71 @@ def Render(output_file_pattern_string = 'render_{time}.jpg'):
     bpy.ops.render.render(write_still = True)
     return
 
+def GetPrefabs(type):
+    prefs_path = pathlib.Path().resolve() / 'TrashPrefabs'
+    subdirs = [ f.path for f in os.scandir(prefs_path) if f.is_dir() ]
+    selected_prefabs = []
+    for subdir in subdirs:
+        json_file_name = os.path.join(subdir,"settings.json")
+        with open(json_file_name) as file:
+            json_data = json.load(file)
+            if json_data['type'] == type:
+                selected_prefabs.append(subdir)
+        
+    return selected_prefabs
+
+def CreateObject(prefab_dir):
+    json_file_name = os.path.join(prefab_dir,"settings.json")
+    with open(json_file_name) as file:
+        json_data = json.load(file)
+
+        prefab_path = os.path.join(prefab_dir, json_data['name']+'.fbx')
+
+        state = bpy.ops.import_scene.fbx(filepath=prefab_path)
+        prefab = bpy.context.selected_objects[0]
+        prefab.name = 'trash_obj'
+
+        sims_available = json_data['sims_available']
+        sims_result = [False, False]
+        if 'deform' in sims_available:
+            sims_result[0] = True
+        if 'fill_water' in sims_available:
+            sims_result[1] = True
+        
+        return sims_result
+    
+def DeleteObject():
+    bpy.data.objects['trash_obj'].select_set(True)
+    bpy.ops.object.delete()
+
 class BottleSimOperator(bpy.types.Operator):
     """Make Sample"""
     bl_idname = "utils.execute_simulation"
     bl_label  = "Create Trash Sample"
+    
+    deform_frames  : bpy.props.IntProperty(name = "Frames for deform",
+     soft_min = 0, soft_max = 40, default = 30)
+     
+    falling_frames : bpy.props.IntProperty(name = "Frames for falling",
+     soft_min = 0, soft_max = 100, default = 80) 
+        
+    bottle_type    : bpy.props.StringProperty(name = "Bottle Type", default = '')
 
     def execute(self, context):
-        output_path = pathlib.Path().resolve() / 'Samples'
-        se = SimExecutioner()
-        se.Process()
+        prefabs = GetPrefabs(self.bottle_type)
+        
+        if len(prefabs) == 0:
+            self.report({"WARNING"}, "No suitable type prefab")
+            return {'CANCELLED'}
+        
+        prefab = random.choice(prefabs)
+        
+        sim_selected = CreateObject(prefab)
+        se = SimExecutioner(self.deform_frames, self.falling_frames)
+        se.Process(sim_selected)
         Render()
+        DeleteObject()
+        
         return {'FINISHED'}
 
     def invoke(self, context, event):

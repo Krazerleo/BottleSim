@@ -16,9 +16,14 @@ class BottleSimPanel(bpy.types.Panel):
         scene = context.scene
         my_props = scene.BottleSimProperties
         layout.prop(my_props, "deform_frames")
+        layout.prop(my_props, "falling_frames")
+        layout.prop(my_props, "bottle_type_enum")
         row = layout.row()
         row.label(text="MakeSample:")
-        row.operator("utils.execute_simulation")
+        op = row.operator("utils.execute_simulation")
+        op.deform_frames=my_props.deform_frames
+        op.falling_frames=my_props.falling_frames
+        op.bottle_type=my_props.bottle_type_enum
 
 def register():
     bpy.utils.register_class(BottleSimPanel)
