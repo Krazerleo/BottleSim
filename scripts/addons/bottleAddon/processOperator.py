@@ -32,11 +32,13 @@ def CreateObject(prefab_dir):
     with open(json_file_name) as file:
         json_data = json.load(file)
 
-        prefab_path = os.path.join(prefab_dir, json_data['name']+'.fbx')
+        prefab_path = os.path.join(prefab_dir, json_data['name']+'.blend')
 
-        state = bpy.ops.import_scene.fbx(filepath=prefab_path)
-        prefab = bpy.context.selected_objects[0]
-        prefab.name = 'trash_obj'
+        with bpy.data.libraries.load(prefab_path) as (data_from, data_to):
+            data_to.objects = data_from.objects
+ 
+        for obj in data_to.objects:
+            bpy.context.scene.collection.objects.link(obj)            
 
         sims_available = json_data['sims_available']
         sims_result = [False, False]
@@ -50,6 +52,9 @@ def CreateObject(prefab_dir):
 def DeleteObject():
     bpy.data.objects['trash_obj'].select_set(True)
     bpy.ops.object.delete()
+    for mat in bpy.data.materials:
+        if mat.name.startswith('trash_mat'):
+            bpy.data.materials.remove(mat)
 
 class BottleSimOperator(bpy.types.Operator):
     """Make Sample"""
