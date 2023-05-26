@@ -1,0 +1,9 @@
+{
+    "name": "beer_bottle_1",
+    "weight" : 0.4,
+    "type" : "BEER_BOTTLE",
+    
+    "sims_available" : [
+      "fill_water"
+    ]
+  }
