@@ -7,11 +7,26 @@ import json
 import bpy
 from . processing import SimExecutioner
 
-def Render(output_file_pattern_string = 'render_{time}.jpg'):
+def Render(output_file_pattern_string = 'render_{time}_{dir}.jpg'):
     output_dir = pathlib.Path().resolve() / 'Samples'
-    now = datetime.now().strftime('%Y-%m-%d')
-    bpy.context.scene.render.filepath = os.path.join(output_dir, output_file_pattern_string.format(time=now))
-    bpy.ops.render.render(write_still = True)
+    my_camera = bpy.data.objects['Camera']
+    camera_pos_coords = [(0.0, 0, 7.8),
+                         (-4.0, 0, 1.6),
+                         (4.0,  0, 1.6)]
+                    
+    camera_rot_coords = [(0,  0, -3.14),
+                         (1.57, 0, -1.57),
+                         (1.57, 0, 1.57)] 
+                                             
+    directions = ['up', 'left', 'right']
+    now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') 
+    
+    for i in range(0,3):        
+        my_camera.location = camera_pos_coords[i]
+        my_camera.rotation_euler = camera_rot_coords[i]
+        bpy.context.scene.render.filepath = os.path.join(output_dir, output_file_pattern_string.format(time=now, dir=directions[i]))
+        bpy.ops.render.render(write_still = True)
+        
     return
 
 def GetPrefabs(type):
@@ -50,8 +65,8 @@ def CreateObject(prefab_dir):
         return sims_result
     
 def DeleteObject():
-    bpy.data.objects['trash_obj'].select_set(True)
-    bpy.ops.object.delete()
+    object_to_delete = bpy.data.objects['trash_obj']    
+    bpy.data.objects.remove(object_to_delete, do_unlink=True)
     for mat in bpy.data.materials:
         if mat.name.startswith('trash_mat'):
             bpy.data.materials.remove(mat)

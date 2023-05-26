@@ -5,7 +5,6 @@ import math
 import bpy
 
 def apply_modifier(obj, mod):
-    
     ctx = bpy.context.copy()
     ctx['object'] = obj
     ctx['modifier'] = mod
@@ -22,11 +21,9 @@ class SimExecutioner():
         self.deform_frames = deform_frames
         self.fall_frames = fall_frames
         self.total_frames = deform_frames+fall_frames
-
         world = bpy.context.scene
         world.frame_start = 0
         world.frame_end = self.total_frames
-        
         scene  = bpy.data.objects     
         self.my_obj = scene['trash_obj']
     
@@ -36,7 +33,6 @@ class SimExecutioner():
         softbody_mod = [mod for mod in my_obj.modifiers if mod.type == 'SOFT_BODY']
         if len(softbody_mod) == 0:
             softbody_mod = my_obj.modifiers.new(name = "Softbody", type = "SOFT_BODY")
-            print(softbody_mod, '========================')
             conf = softbody_mod.settings
             conf.bend = 1.500
             conf.damping = 0.5
@@ -61,7 +57,6 @@ class SimExecutioner():
                     
         my_obj.location = spawn_loc
         my_obj.rotation_euler = spawn_rot
-        
         world = bpy.context.scene
         
         for frame in range(0,self.deform_frames):
@@ -69,15 +64,12 @@ class SimExecutioner():
         
         apply_modifier(my_obj, softbody_mod)
         
-        
     def drop_object(self):        
         my_obj = self.my_obj
         my_obj.select_set(True)
         bpy.context.view_layer.objects.active = my_obj
-        
         bpy.ops.object.origin_set(type = 'ORIGIN_GEOMETRY', 
-                                  center = 'MEDIAN')
-                                  
+                                  center = 'MEDIAN')                          
         bpy.ops.rigidbody.object_add(type='ACTIVE')
         
         spawn_loc = (random.uniform(-2.5,2.5),
@@ -90,16 +82,13 @@ class SimExecutioner():
 
         my_obj.location = spawn_loc
         my_obj.rotation_euler = spawn_rot
-        
         world = bpy.context.scene
         
         for frame in range(self.deform_frames, self.total_frames+1):
             world.frame_set(frame)       
     
-    
     def fill_water_obj(self):
         pass
-
 
     def Process(self, sim_selected):
         if sim_selected[0]:
