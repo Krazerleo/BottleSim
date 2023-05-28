@@ -3,6 +3,7 @@ import sys
 import os
 import random
 import pathlib
+import shutil
 import json
 import bpy
 from . processing import SimExecutioner
@@ -21,7 +22,7 @@ def Render(output_file_pattern_string = 'render_{time}_{dir}.jpg'):
     directions = ['up', 'left', 'right']
     now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') 
     
-    for i in range(0,3):        
+    for i in range(0,1):        
         my_camera.location = camera_pos_coords[i]
         my_camera.rotation_euler = camera_rot_coords[i]
         bpy.context.scene.render.filepath = os.path.join(output_dir, output_file_pattern_string.format(time=now, dir=directions[i]))
@@ -65,12 +66,25 @@ def CreateObject(prefab_dir):
         return sims_result
     
 def DeleteObject():
-    object_to_delete = bpy.data.objects['trash_obj']    
-    bpy.data.objects.remove(object_to_delete, do_unlink=True)
+    objects_to_delete = [bpy.data.objects['trash_obj'], 
+                        bpy.data.objects['domain'],
+                        bpy.data.objects['fluid_output']]
+    for it in objects_to_delete:
+        bpy.data.objects.remove(it, do_unlink=True)
+                        
     for mat in bpy.data.materials:
         if mat.name.startswith('trash_mat'):
             bpy.data.materials.remove(mat)
-
+    
+    root_dir = pathlib.Path().resolve()
+    subdirs = [ f.path for f in os.scandir(root_dir) if f.is_dir()]
+    
+    for subdir in subdirs:
+        print(subdir)
+        if 'cache_fluid' in subdir:
+            shutil.rmtree(subdir)
+    
+    
 class BottleSimOperator(bpy.types.Operator):
     """Make Sample"""
     bl_idname = "utils.execute_simulation"
@@ -94,12 +108,11 @@ class BottleSimOperator(bpy.types.Operator):
         prefab = random.choice(prefabs)
         
         sim_selected = CreateObject(prefab)
-        se = SimExecutioner(self.deform_frames, self.falling_frames)
+        se = SimExecutioner(self.deform_frames, self.falling_frames, 25)
         se.Process(sim_selected)
         Render()
-        DeleteObject()
-        
-        return {'FINISHED'}
+        DeleteObject()        
+        return {'FINISHED'}        
 
     def invoke(self, context, event):
         return self.execute(context)

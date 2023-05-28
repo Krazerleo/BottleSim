@@ -1,6 +1,6 @@
 {
     "name": "glass_bottle_1",
-    "weight" : 0.5,
+    "weight" : 1,
     "type" : "WATER_BOTTLE",
     
     "sims_available" : [

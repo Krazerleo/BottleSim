@@ -1,0 +1,9 @@
+{
+    "name": "cola_can_1",
+    "weight" : 0.2,
+    "type" : "CAN",
+    
+    "sims_available" : [
+      "deform"
+    ]
+  }

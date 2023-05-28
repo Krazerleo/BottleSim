@@ -2,28 +2,31 @@ from os import system
 import typing
 import random
 import math
+from mathutils import Vector
 import bpy
+import bmesh
 
 def apply_modifier(obj, mod):
     ctx = bpy.context.copy()
     ctx['object'] = obj
     ctx['modifier'] = mod
     bpy.ops.object.modifier_apply(ctx, modifier=mod.name)
-
-
+    
 class SimExecutioner():    
     obj_types_available = [ "Bottle", "Others types to implement" ]
     deformable_objects  = { "Bottle" : True }
     
     def __init__(self, deform_frames : int = 30, 
-                    fall_frames : int = 80,):
+                    fall_frames : int = 80,
+                    water_frames: int = 100):
         
         self.deform_frames = deform_frames
         self.fall_frames = fall_frames
-        self.total_frames = deform_frames+fall_frames
+        self.water_frames = water_frames
+        self.current_frame = 0
         world = bpy.context.scene
         world.frame_start = 0
-        world.frame_end = self.total_frames
+        world.frame_end = 0
         scene  = bpy.data.objects     
         self.my_obj = scene['trash_obj']
     
@@ -59,9 +62,11 @@ class SimExecutioner():
         my_obj.rotation_euler = spawn_rot
         world = bpy.context.scene
         
-        for frame in range(0,self.deform_frames):
+        for frame in range(self.current_frame, self.current_frame + self.deform_frames):
+            print(frame)
             world.frame_set(frame)
         
+        self.current_frame = self.current_frame + self.deform_frames
         apply_modifier(my_obj, softbody_mod)
         
     def drop_object(self):        
@@ -84,17 +89,75 @@ class SimExecutioner():
         my_obj.rotation_euler = spawn_rot
         world = bpy.context.scene
         
-        for frame in range(self.deform_frames, self.total_frames+1):
+        for frame in range(self.current_frame, self.current_frame + self.fall_frames):
+            print(frame)
             world.frame_set(frame)       
-    
+        
+        self.current_frame = self.current_frame + self.fall_frames
+        bpy.ops.object.visual_transform_apply()
+        bpy.ops.rigidbody.object_remove()
+        
     def fill_water_obj(self):
-        pass
+        my_obj = self.my_obj
+        verts_sel = [v.co for v in my_obj.data.vertices]
+        pivot = my_obj.matrix_world @ (sum(verts_sel, Vector()) / len(verts_sel))
+        
+        fluid_mesh = bpy.data.meshes.new('fluid_output')
+        fluid_sphere = bpy.data.objects.new("fluid_output", fluid_mesh)
+        bpy.context.collection.objects.link(fluid_sphere)
+        bpy.context.view_layer.objects.active = fluid_sphere
+        bmesh_instance = bmesh.new()
+        bmesh.ops.create_uvsphere(bmesh_instance, u_segments=32, v_segments=16, radius=0.2)
+        bmesh_instance.to_mesh(fluid_mesh)
+        bmesh_instance.free()
+        fluid_sphere.location = pivot
+        
+        bpy.ops.object.select_all(action='DESELECT')
+        
+        bpy.ops.mesh.primitive_cube_add(size=1, enter_editmode=False, 
+        location = my_obj.location, rotation = my_obj.rotation_euler)
+        bpy.context.active_object.dimensions = my_obj.dimensions
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        bpy.context.active_object.name = 'domain'
+        bpy.ops.object.shade_smooth(use_auto_smooth=False)
 
+        fluid_mod = bpy.context.active_object.modifiers.new(name = "Fluid Modifier", type = "FLUID")
+        fluid_mod.fluid_type = 'DOMAIN'
+        settings = fluid_mod.domain_settings
+        settings.domain_type = 'LIQUID'
+        settings.resolution_max = 64
+        settings.use_mesh = True
+        settings.effector_weights.force = 0
+        settings.cache_frame_start = self.current_frame
+        settings.cache_frame_end = self.current_frame + self.water_frames
+        
+        fluid_sphere.select_set(True)
+        fluid_mod = fluid_sphere.modifiers.new(name = "Fluid Modifier", type = "FLUID")
+        fluid_mod.fluid_type = 'FLOW'
+        settings = fluid_mod.flow_settings 
+        settings.flow_type = 'LIQUID' 
+        fluid_sphere.hide_render = True
+        
+        my_obj.select_set(True)
+        fluid_mod = my_obj.modifiers.new(name = "Fluid Modifier", type = "FLUID")
+        fluid_mod.fluid_type = 'EFFECTOR'
+        settings = fluid_mod.effector_settings 
+        settings.surface_distance = 0.5
+        
+        world = bpy.context.scene
+        for frame in range(self.current_frame, self.current_frame + self.water_frames):
+            print(frame)
+            world.frame_set(frame) 
+        
     def Process(self, sim_selected):
+        world = bpy.context.scene
         if sim_selected[0]:
+            world.frame_end += self.deform_frames
             self.deform_object()
             
+        world.frame_end += self.fall_frames    
         self.drop_object()
         
         if sim_selected[1]:
+            world.frame_end += self.water_frames
             self.fill_water_obj()
