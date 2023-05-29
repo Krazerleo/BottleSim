@@ -2,6 +2,7 @@ from os import system
 import typing
 import random
 import math
+import numpy as np
 from mathutils import Vector
 import bpy
 import bmesh
@@ -16,13 +17,13 @@ class SimExecutioner():
     obj_types_available = [ "Bottle", "Others types to implement" ]
     deformable_objects  = { "Bottle" : True }
     
-    def __init__(self, deform_frames : int = 30, 
-                    fall_frames : int = 80,
-                    water_frames: int = 100):
+    def __init__(self, deform_frames, fall_frames, water_frames, water_resolution):
         
         self.deform_frames = deform_frames
         self.fall_frames = fall_frames
         self.water_frames = water_frames
+        self.water_resolution = water_resolution
+        
         self.current_frame = 0
         world = bpy.context.scene
         world.frame_start = 0
@@ -63,7 +64,6 @@ class SimExecutioner():
         world = bpy.context.scene
         
         for frame in range(self.current_frame, self.current_frame + self.deform_frames):
-            print(frame)
             world.frame_set(frame)
         
         self.current_frame = self.current_frame + self.deform_frames
@@ -90,7 +90,6 @@ class SimExecutioner():
         world = bpy.context.scene
         
         for frame in range(self.current_frame, self.current_frame + self.fall_frames):
-            print(frame)
             world.frame_set(frame)       
         
         self.current_frame = self.current_frame + self.fall_frames
@@ -102,8 +101,8 @@ class SimExecutioner():
         verts_sel = [v.co for v in my_obj.data.vertices]
         pivot = my_obj.matrix_world @ (sum(verts_sel, Vector()) / len(verts_sel))
         
-        fluid_mesh = bpy.data.meshes.new('fluid_output')
-        fluid_sphere = bpy.data.objects.new("fluid_output", fluid_mesh)
+        fluid_mesh = bpy.data.meshes.new('trash_obj_fluid_output')
+        fluid_sphere = bpy.data.objects.new("trash_obj_fluid_output", fluid_mesh)
         bpy.context.collection.objects.link(fluid_sphere)
         bpy.context.view_layer.objects.active = fluid_sphere
         bmesh_instance = bmesh.new()
@@ -118,14 +117,23 @@ class SimExecutioner():
         location = my_obj.location, rotation = my_obj.rotation_euler)
         bpy.context.active_object.dimensions = my_obj.dimensions
         bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-        bpy.context.active_object.name = 'domain'
+        bpy.context.active_object.name = 'trash_obj_domain'
         bpy.ops.object.shade_smooth(use_auto_smooth=False)
-
-        fluid_mod = bpy.context.active_object.modifiers.new(name = "Fluid Modifier", type = "FLUID")
+        
+        domain_box = bpy.context.scene.objects['trash_obj_domain']
+        mat = bpy.data.materials.get('water')
+        mat.node_tree.nodes['Volume Absorption'].inputs[0].default_value = (np.random.uniform(),np.random.uniform(), np.random.uniform(), 1.0)
+        
+        if domain_box.data.materials:
+            domain_box.data.materials[0] = mat
+        else:
+            domain_box.data.materials.append(mat)
+        
+        fluid_mod = domain_box.modifiers.new(name = "Fluid Modifier", type = "FLUID")
         fluid_mod.fluid_type = 'DOMAIN'
         settings = fluid_mod.domain_settings
         settings.domain_type = 'LIQUID'
-        settings.resolution_max = 64
+        settings.resolution_max = 2 ** self.water_resolution
         settings.use_mesh = True
         settings.effector_weights.force = 0
         settings.cache_frame_start = self.current_frame
@@ -146,7 +154,6 @@ class SimExecutioner():
         
         world = bpy.context.scene
         for frame in range(self.current_frame, self.current_frame + self.water_frames):
-            print(frame)
             world.frame_set(frame) 
         
     def Process(self, sim_selected):

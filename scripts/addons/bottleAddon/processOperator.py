@@ -22,7 +22,7 @@ def Render(output_file_pattern_string = 'render_{time}_{dir}.jpg'):
     directions = ['up', 'left', 'right']
     now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') 
     
-    for i in range(0,1):        
+    for i in range(0,3):        
         my_camera.location = camera_pos_coords[i]
         my_camera.rotation_euler = camera_rot_coords[i]
         bpy.context.scene.render.filepath = os.path.join(output_dir, output_file_pattern_string.format(time=now, dir=directions[i]))
@@ -38,7 +38,7 @@ def GetPrefabs(type):
         json_file_name = os.path.join(subdir,"settings.json")
         with open(json_file_name) as file:
             json_data = json.load(file)
-            if json_data['type'] == type:
+            if json_data['type'] == type or type == 'ANY':
                 selected_prefabs.append(subdir)
         
     return selected_prefabs
@@ -65,12 +65,15 @@ def CreateObject(prefab_dir):
         
         return sims_result
     
+def AdjustDeformForce(deform_force):
+    for field in bpy.data.objects:
+        if field.name.startswith('deform_field'):
+            field.field.strength = deform_force
+
 def DeleteObject():
-    objects_to_delete = [bpy.data.objects['trash_obj'], 
-                        bpy.data.objects['domain'],
-                        bpy.data.objects['fluid_output']]
-    for it in objects_to_delete:
-        bpy.data.objects.remove(it, do_unlink=True)
+    for trash_obj in bpy.data.objects:
+        if trash_obj.name.startswith('trash_obj'):            
+            bpy.data.objects.remove(trash_obj, do_unlink=True)
                         
     for mat in bpy.data.materials:
         if mat.name.startswith('trash_mat'):
@@ -80,7 +83,6 @@ def DeleteObject():
     subdirs = [ f.path for f in os.scandir(root_dir) if f.is_dir()]
     
     for subdir in subdirs:
-        print(subdir)
         if 'cache_fluid' in subdir:
             shutil.rmtree(subdir)
     
@@ -90,13 +92,22 @@ class BottleSimOperator(bpy.types.Operator):
     bl_idname = "utils.execute_simulation"
     bl_label  = "Create Trash Sample"
     
-    deform_frames  : bpy.props.IntProperty(name = "Frames for deform",
-     soft_min = 0, soft_max = 40, default = 30)
+    deform_frames : bpy.props.IntProperty(name = "Frames for deform",
+     soft_min = 0, default = 30)
      
     falling_frames : bpy.props.IntProperty(name = "Frames for falling",
-     soft_min = 0, soft_max = 100, default = 80) 
+     soft_min = 0, default = 100)
+     
+    water_frames : bpy.props.IntProperty(name = "Frames for water simulation",
+     soft_min = 0, default = 150)
+     
+    water_resolution : bpy.props.IntProperty(name = "Water simulation quality",
+     soft_min = 0, soft_max = 10, default = 7)
+     
+    deform_force : bpy.props.FloatProperty(name = "Deformation force",
+     soft_min = 0, soft_max = 2, default = 0.5) 
         
-    bottle_type    : bpy.props.StringProperty(name = "Bottle Type", default = '')
+    bottle_type : bpy.props.StringProperty(name = "Bottle Type", default = 'ANY')
 
     def execute(self, context):
         prefabs = GetPrefabs(self.bottle_type)
@@ -108,7 +119,11 @@ class BottleSimOperator(bpy.types.Operator):
         prefab = random.choice(prefabs)
         
         sim_selected = CreateObject(prefab)
-        se = SimExecutioner(self.deform_frames, self.falling_frames, 25)
+        se = SimExecutioner(self.deform_frames, self.falling_frames, 
+            self.water_frames,self.water_resolution)
+        
+        AdjustDeformForce(self.deform_force)
+        
         se.Process(sim_selected)
         Render()
         DeleteObject()        
