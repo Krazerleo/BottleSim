@@ -9,7 +9,7 @@ import bpy
 from . processing import SimExecutioner
 
 def Render(output_file_pattern_string = 'render_{time}_{dir}.jpg'):
-    output_dir = pathlib.Path().resolve() / 'Samples'
+    output_dir = pathlib.Path(os.getenv("BOTTLE_SIM_DIR")).resolve() / 'Samples'
     my_camera = bpy.data.objects['Camera']
     camera_pos_coords = [(0.0, 0, 7.8),
                          (-4.0, 0, 1.6),
@@ -22,7 +22,8 @@ def Render(output_file_pattern_string = 'render_{time}_{dir}.jpg'):
     directions = ['up', 'left', 'right']
     now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') 
     
-    for i in range(0,3):        
+    for i in range(0,3):
+        print(f"Begin render {directions[i]}")       
         my_camera.location = camera_pos_coords[i]
         my_camera.rotation_euler = camera_rot_coords[i]
         bpy.context.scene.render.filepath = os.path.join(output_dir, output_file_pattern_string.format(time=now, dir=directions[i]))
@@ -31,7 +32,7 @@ def Render(output_file_pattern_string = 'render_{time}_{dir}.jpg'):
     return
 
 def GetPrefabs(type):
-    prefs_path = pathlib.Path().resolve() / 'TrashPrefabs'
+    prefs_path = pathlib.Path(os.getenv("BOTTLE_SIM_DIR")).resolve() / 'TrashPrefabs'
     subdirs = [ f.path for f in os.scandir(prefs_path) if f.is_dir() ]
     selected_prefabs = []
     for subdir in subdirs:
@@ -79,7 +80,7 @@ def DeleteObject():
         if mat.name.startswith('trash_mat'):
             bpy.data.materials.remove(mat)
     
-    root_dir = pathlib.Path().resolve()
+    root_dir = pathlib.Path(os.getenv("BOTTLE_SIM_DIR")).resolve()
     subdirs = [ f.path for f in os.scandir(root_dir) if f.is_dir()]
     
     for subdir in subdirs:

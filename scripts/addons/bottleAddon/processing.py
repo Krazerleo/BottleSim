@@ -13,10 +13,7 @@ def apply_modifier(obj, mod):
     ctx['modifier'] = mod
     bpy.ops.object.modifier_apply(ctx, modifier=mod.name)
     
-class SimExecutioner():    
-    obj_types_available = [ "Bottle", "Others types to implement" ]
-    deformable_objects  = { "Bottle" : True }
-    
+class SimExecutioner():        
     def __init__(self, deform_frames, fall_frames, water_frames, water_resolution):
         
         self.deform_frames = deform_frames
@@ -159,12 +156,15 @@ class SimExecutioner():
     def Process(self, sim_selected):
         world = bpy.context.scene
         if sim_selected[0]:
+            print("Started deformation simulation")
             world.frame_end += self.deform_frames
             self.deform_object()
             
-        world.frame_end += self.fall_frames    
+        print("Started falling simulation") 
+        world.frame_end += self.fall_frames          
         self.drop_object()
         
         if sim_selected[1]:
+            print("Started fluid simulation")
             world.frame_end += self.water_frames
             self.fill_water_obj()
