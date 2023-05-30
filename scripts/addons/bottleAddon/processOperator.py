@@ -11,18 +11,16 @@ from . processing import SimExecutioner
 def Render(output_file_pattern_string = 'render_{time}_{dir}.jpg'):
     output_dir = pathlib.Path(os.getenv("BOTTLE_SIM_DIR")).resolve() / 'Samples'
     my_camera = bpy.data.objects['Camera']
-    camera_pos_coords = [(0.0, 0, 7.8),
-                         (-4.0, 0, 1.6),
-                         (4.0,  0, 1.6)]
+    camera_pos_coords = [(1.2, 0.1, 5.9),
+                         (4.5, 0, 1.0)]
                     
     camera_rot_coords = [(0,  0, -3.14),
-                         (1.57, 0, -1.57),
                          (1.57, 0, 1.57)] 
                                              
-    directions = ['up', 'left', 'right']
+    directions = ['up', 'left']
     now = datetime.now().strftime('%Y-%m-%d_%H-%M-%S') 
     
-    for i in range(0,3):
+    for i in range(0,2):
         print(f"Begin render {directions[i]}")       
         my_camera.location = camera_pos_coords[i]
         my_camera.rotation_euler = camera_rot_coords[i]
