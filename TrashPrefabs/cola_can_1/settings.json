@@ -1,6 +1,6 @@
 {
     "name": "cola_can_1",
-    "weight" : 0.2,
+    "weight" : 0.4,
     "type" : "CAN",
     
     "sims_available" : [

@@ -1,5 +1,3 @@
-from os import system
-import typing
 import random
 import math
 import numpy as np
@@ -168,3 +166,15 @@ class SimExecutioner():
             print("Started fluid simulation")
             world.frame_end += self.water_frames
             self.fill_water_obj()
+
+        me = self.my_obj.data
+
+        bm = bmesh.new()
+  
+        bm.from_mesh(me)
+
+        bmesh.ops.subdivide_edges(bm, edges=bm.edges,
+                                cuts=2, use_grid_fill=True)
+
+        bm.to_mesh(me)
+        me.update()

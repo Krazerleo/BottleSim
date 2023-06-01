@@ -1,5 +1,3 @@
-import sys
-from os import system
 import bpy
 from . processOperator import BottleSimOperator
 
