@@ -101,7 +101,7 @@ class SimExecutioner():
         bpy.context.collection.objects.link(fluid_sphere)
         bpy.context.view_layer.objects.active = fluid_sphere
         bmesh_instance = bmesh.new()
-        bmesh.ops.create_uvsphere(bmesh_instance, u_segments=32, v_segments=16, radius=0.2)
+        bmesh.ops.create_uvsphere(bmesh_instance, u_segments=32, v_segments=16, radius=0.5)
         bmesh_instance.to_mesh(fluid_mesh)
         bmesh_instance.free()
         fluid_sphere.location = pivot
@@ -133,7 +133,13 @@ class SimExecutioner():
         settings.effector_weights.force = 0
         settings.cache_frame_start = self.current_frame
         settings.cache_frame_end = self.current_frame + self.water_frames
-        
+        settings.use_collision_border_back = False
+        settings.use_collision_border_bottom = False
+        settings.use_collision_border_front = False
+        settings.use_collision_border_left = False
+        settings.use_collision_border_right = False
+        settings.use_collision_border_top = False
+
         fluid_sphere.select_set(True)
         fluid_mod = fluid_sphere.modifiers.new(name = "Fluid Modifier", type = "FLUID")
         fluid_mod.fluid_type = 'FLOW'

@@ -26,7 +26,7 @@ plastic_colors = [ (102 / 255, 1, 102 / 255, 1),
 def Render(output_file_pattern_string = 'render_{time}_{dir}.jpg'):
     output_dir = pathlib.Path(os.getenv("BOTTLE_SIM_DIR")).resolve() / 'Samples'
     my_camera = bpy.data.objects['Camera']
-    camera_pos_coords = [(1.2, 0.1, 5.9),
+    camera_pos_coords = [(1.2, 0.1, 5.3),
                          (4.5, 0, 1.0)]
                     
     camera_rot_coords = [(0,  0, -3.14),
